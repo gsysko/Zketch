@@ -16,6 +16,7 @@ figma.ui.resize(400, 100)
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
 figma.ui.onmessage = async msg => {
+  //TODO: Upload flow as an organization wide font!
   await figma.loadFontAsync({family: "Flow", style: "Circular"})
   let blockFontName: FontName = {family: "Flow", style: "Circular"}
   if (msg.type === 'watch') {
