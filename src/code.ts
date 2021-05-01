@@ -17,34 +17,45 @@ figma.ui.resize(400, 100)
 // posted message.
 figma.ui.onmessage = async msg => {
   //TODO: Upload flow as an organization wide font!
-  await figma.loadFontAsync({family: "Flow", style: "Circular"})
+  await figma.loadFontAsync({family: "Flow", style: "Circular"}).catch(() => {
+    figma.ui.postMessage("missing_font")
+  })
   let blockFontName: FontName = {family: "Flow", style: "Circular"}
   if (msg.type === 'watch') {
     //See if anything is selected.
     let prevSelection = figma.currentPage.selection[0]
     //Loop while the plugin is open.
     while (true) {
-      await timer(1000)
+      await timer(700)
       //See what is now selected...
       figma.currentPage.selection.forEach(currentSelection => {
         //...and if anything is selected, and it is different than what was previously selected...
         if (currentSelection && currentSelection != prevSelection){
+          //TODO Check that blockframing has not already been applied.
           //Register changed selection...
-          console.log(currentSelection);
           prevSelection = currentSelection
           //... and sketchify it!
           switch(currentSelection.type) {
             case "INSTANCE": {
               let component = currentSelection as InstanceNode
+              if(component.mainComponent.name.endsWith("icon") || (component.mainComponent.parent && component.mainComponent.parent.name.endsWith("icon"))) {
+                replaceIcon(component)
+              }
               (component.findAll(node => node.type == "TEXT") as TextNode[]).forEach(text => {
+                replaceText(text, blockFontName)
+              });
+              (component.findAll(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
                 //TODO: Need to check if already blockframed
-                text.fontName = blockFontName
-                text.fontSize = text.fontSize as number * 2
-                text.letterSpacing = {value: (text.letterSpacing as LetterSpacing).value * 44.33, unit: (text.letterSpacing as LetterSpacing).unit}
-                text.opacity = 0.35
-              })
-              //TODO: also care for text layers etc.
+                replaceIcon(icon)
+              });
+              break
             }
+            case "TEXT": {
+              let component = currentSelection as TextNode
+              replaceText(currentSelection, blockFontName)
+              break
+            }
+              //TODO: also care for text layers etc.
           }
         } else {
           // console.log(currentSelection)
@@ -79,3 +90,30 @@ function clone(val) {
   }
   throw 'unknown'
 }
+function replaceText(text: TextNode, blockFontName: FontName) {
+  if((text.fontName as FontName).family !== blockFontName.family) {
+    text.fontName = blockFontName
+    text.fontSize = text.fontSize as number * 2
+    text.letterSpacing = {value: (text.letterSpacing as LetterSpacing).value * 50, unit: (text.letterSpacing as LetterSpacing).unit}
+    text.opacity = 0.35
+  }
+}
+
+async function replaceIcon(icon: InstanceNode) {
+  debugger
+  if (icon.mainComponent.name.endsWith("26px icon")){
+    await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
+      icon.swapComponent(component)
+    })
+  } else if (icon.mainComponent.parent.name.endsWith("12px icon")){
+    await figma.importComponentByKeyAsync("fe683a34c123e6be216b2df0dbd1b89256015bea").then(component => {
+      icon.swapComponent(component)
+    })
+  } else if (icon.mainComponent.parent.name.endsWith("16px icon")){
+    await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
+      icon.swapComponent(component)
+    })
+  }
+  icon.opacity = 0.35
+}
+
