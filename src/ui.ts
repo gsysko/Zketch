@@ -7,6 +7,6 @@ window.onload = function() {
 onmessage = (event) => {
   if (event.data.pluginMessage == "missing_font"){
     let span = document.getElementsByTagName('span')[0] as HTMLSpanElement
-    span.innerHTML = "Sketchy requires the 'Flow' font. Download it <a href='https://danross.co/flow/#' target='_blank'>here</a>."
+    span.innerHTML = "Zketchy requires the 'Flow' font. Download it <a href='https://danross.co/flow/#' target='_blank'>here</a>."
   }
 }
