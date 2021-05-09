@@ -20,7 +20,6 @@ figma.ui.onmessage = async msg => {
   await figma.loadFontAsync({family: "Flow", style: "Circular"}).catch(() => {
     figma.ui.postMessage("missing_font")
   })
-  let blockFontName: FontName = {family: "Flow", style: "Circular"}
   if (msg.type === 'watch') {
     //See if anything is selected.
     let prevSelection = figma.currentPage.selection[0]
@@ -42,7 +41,7 @@ figma.ui.onmessage = async msg => {
                 replaceIcon(component)
               }
               (component.findAll(node => node.type == "TEXT") as TextNode[]).forEach(text => {
-                replaceText(text, blockFontName)
+                replaceText(text)
               });
               (component.findAll(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
                 //TODO: Need to check if already blockframed
@@ -52,10 +51,11 @@ figma.ui.onmessage = async msg => {
             }
             case "TEXT": {
               let component = currentSelection as TextNode
-              replaceText(currentSelection, blockFontName)
+              replaceText(currentSelection)
               break
             }
               //TODO: also care for text layers etc.
+              //TODO: Replace effects.
           }
         } else {
           // console.log(currentSelection)
@@ -90,7 +90,9 @@ function clone(val) {
   }
   throw 'unknown'
 }
-function replaceText(text: TextNode, blockFontName: FontName) {
+
+function replaceText(text: TextNode) {
+  let blockFontName: FontName = {family: "Flow", style: "Circular"}
   if((text.fontName as FontName).family !== blockFontName.family) {
     text.fontName = blockFontName
     text.fontSize = text.fontSize as number * 2
@@ -114,6 +116,6 @@ async function replaceIcon(icon: InstanceNode) {
       icon.swapComponent(component)
     })
   }
-  icon.opacity = 0.35
+  icon.opacity = 0.5
 }
 
