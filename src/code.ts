@@ -54,7 +54,6 @@ figma.ui.onmessage = async msg => {
               replaceText(currentSelection)
               break
             }
-              //TODO: also care for text layers etc.
               //TODO: Replace effects.
           }
         } else {
@@ -96,7 +95,9 @@ function replaceText(text: TextNode) {
   if((text.fontName as FontName).family !== blockFontName.family) {
     text.fontName = blockFontName
     text.fontSize = text.fontSize as number * 2
-    text.letterSpacing = {value: (text.letterSpacing as LetterSpacing).value * 50, unit: (text.letterSpacing as LetterSpacing).unit}
+    text.letterSpacing = {value: text.fontSize * -.28, unit: (text.letterSpacing as LetterSpacing).unit}
+    text.insertCharacters(0, " ")
+    text.setRangeLetterSpacing(0, 1, {value: text.letterSpacing.value * 1.6, unit:  (text.letterSpacing as LetterSpacing).unit})
     text.opacity = 0.35
   }
 }
