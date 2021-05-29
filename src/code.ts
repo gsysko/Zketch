@@ -47,6 +47,7 @@ figma.ui.onmessage = async msg => {
                 //TODO: Need to check if already blockframed
                 replaceIcon(icon)
               });
+              component.setRelaunchData({ open: "" })
               break
             }
             case "TEXT": {
