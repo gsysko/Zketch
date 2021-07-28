@@ -16,13 +16,11 @@ figma.ui.resize(400, 100)
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
 figma.ui.onmessage = async msg => {
-  //TODO: Upload flow as an organization wide font!
   await figma.loadFontAsync({family: "Flow", style: "Circular"}).catch(() => {
     figma.ui.postMessage("missing_font")
   })
   if (msg.type === 'watch') {
-    //See if anything is selected.
-    let prevSelection = figma.currentPage.selection[0]
+    let prevSelection
     //Loop while the plugin is open.
     while (true) {
       await timer(700)
@@ -30,33 +28,36 @@ figma.ui.onmessage = async msg => {
       figma.currentPage.selection.forEach(currentSelection => {
         //...and if anything is selected, and it is different than what was previously selected...
         if (currentSelection && currentSelection != prevSelection){
-          //TODO Check that blockframing has not already been applied.
           //Register changed selection...
           prevSelection = currentSelection
           //... and sketchify it!
           switch(currentSelection.type) {
-            case "INSTANCE": {
-              let component = currentSelection as InstanceNode
-              if(component.mainComponent.name.endsWith("icon") || (component.mainComponent.parent && component.mainComponent.parent.name.endsWith("icon"))) {
-                replaceIcon(component)
+            case "INSTANCE":
+            case "FRAME":
+            case "GROUP": {
+              try {
+                (currentSelection.findAll(node => node.type == "TEXT") as TextNode[]).forEach(text => {
+                  replaceText(text)
+                });
+                (currentSelection.findAll(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
+                  replaceIcon(icon)
+                });
+                if (currentSelection.type == "INSTANCE") {
+                  if(currentSelection.mainComponent.name.endsWith("icon") || (currentSelection.mainComponent.parent && currentSelection.mainComponent.parent.name.endsWith("icon"))) {
+                    replaceIcon(currentSelection)
+                  }
+                }
+              } catch (error) {
+                console.log(error)
               }
-              (component.findAll(node => node.type == "TEXT") as TextNode[]).forEach(text => {
-                replaceText(text)
-              });
-              (component.findAll(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
-                //TODO: Need to check if already blockframed
-                replaceIcon(icon)
-              });
-              component.setRelaunchData({ open: "" })
               break
             }
             case "TEXT": {
-              let component = currentSelection as TextNode
               replaceText(currentSelection)
               break
             }
-              //TODO: Replace effects.
           }
+          currentSelection.setRelaunchData({ open: "" })
         } else {
           // console.log(currentSelection)
         }
@@ -104,20 +105,22 @@ function replaceText(text: TextNode) {
 }
 
 async function replaceIcon(icon: InstanceNode) {
-  debugger
-  if (icon.mainComponent.name.endsWith("26px icon")){
-    await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
-      icon.swapComponent(component)
-    })
-  } else if (icon.mainComponent.parent.name.endsWith("12px icon")){
-    await figma.importComponentByKeyAsync("fe683a34c123e6be216b2df0dbd1b89256015bea").then(component => {
-      icon.swapComponent(component)
-    })
-  } else if (icon.mainComponent.parent.name.endsWith("16px icon")){
-    await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
-      icon.swapComponent(component)
-    })
+  if (icon.getPluginData("isZketched") != "true"){
+    if (icon.mainComponent.name.endsWith("26px icon")){
+      await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
+        icon.swapComponent(component)
+      })
+    } else if (icon.mainComponent.parent.name.endsWith("12px icon")){
+      await figma.importComponentByKeyAsync("fe683a34c123e6be216b2df0dbd1b89256015bea").then(component => {
+        icon.swapComponent(component)
+      })
+    } else if (icon.mainComponent.parent.name.endsWith("16px icon")){
+      await figma.importComponentByKeyAsync("d36051d3311eb699032aec760e0b0758e223d698").then(component => {
+        icon.swapComponent(component)
+      })
+    }
+    icon.opacity = 0.5
+    icon.setPluginData("isZketched", "true")
   }
-  icon.opacity = 0.5
 }
 
