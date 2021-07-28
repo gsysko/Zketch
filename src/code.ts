@@ -98,9 +98,11 @@ function replaceText(text: TextNode) {
     text.fontName = blockFontName
     text.fontSize = text.fontSize as number * 2
     text.letterSpacing = {value: text.fontSize * -.28, unit: (text.letterSpacing as LetterSpacing).unit}
-    text.insertCharacters(0, " ")
-    text.setRangeLetterSpacing(0, 1, {value: text.letterSpacing.value * 1.6, unit:  (text.letterSpacing as LetterSpacing).unit})
     text.opacity = 0.35
+    if ((text.lineHeight as LineHeight).unit == "PIXELS" && (text.lineHeight as LineHeight)["value"] == text.height) {
+      text.insertCharacters(0, " ")
+      text.setRangeLetterSpacing(0, 1, {value: text.letterSpacing.value * 1.6, unit:  (text.letterSpacing as LetterSpacing).unit})
+    }
   }
 }
 
