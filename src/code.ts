@@ -1,3 +1,7 @@
+const STYLE_ID_MODAL : string = "S:81b110b885888cb981a62e92e5f3dc6e29353b7a,169:1"
+const STYLE_ID_MENU : string = "S:20b0405ad7024a20ad878b90b3b75bd5bb26443a,250:3"
+const STYLE_ID_TOOLTIP : string = "S:04599336e00832bfa0541e1b3d136384d1ddafdd,133:1"
+
 var messageCount: number = 0
 var conversation: FrameNode
 
@@ -35,18 +39,18 @@ figma.ui.onmessage = async msg => {
             case "INSTANCE":
             case "FRAME":
             case "GROUP": {
+              let selectedNodes : SceneNode[] = currentSelection.findAll()
+              selectedNodes.push(currentSelection)
               try {
-                (currentSelection.findAll(node => node.type == "TEXT") as TextNode[]).forEach(text => {
+                (selectedNodes.filter(node => node.type == "TEXT") as TextNode[]).forEach(text => {
                   replaceText(text)
                 });
-                (currentSelection.findAll(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
+                (selectedNodes.filter(node => node.type == "INSTANCE" && (node.mainComponent.name.endsWith("icon") || (node.mainComponent.parent && node.mainComponent.parent.name.endsWith("icon")))) as InstanceNode[]).forEach(icon => {
                   replaceIcon(icon)
                 });
-                if (currentSelection.type == "INSTANCE") {
-                  if(currentSelection.mainComponent.name.endsWith("icon") || (currentSelection.mainComponent.parent && currentSelection.mainComponent.parent.name.endsWith("icon"))) {
-                    replaceIcon(currentSelection)
-                  }
-                }
+                selectedNodes.filter(node => "effectStyleId" in node && node.effectStyleId != "").forEach( shadyNode => {
+                  replaceShadow(shadyNode)
+                });
               } catch (error) {
                 console.log(error)
               }
@@ -123,6 +127,28 @@ async function replaceIcon(icon: InstanceNode) {
     }
     icon.opacity = 0.5
     icon.setPluginData("isZketched", "true")
+  }
+}
+
+function replaceShadow(node: SceneNode) {
+  if ("effectStyleId" in node) {
+    switch(node.effectStyleId) {
+      case STYLE_ID_MODAL: {
+        node.effectStyleId = ""
+        node.effects = [{"type":"DROP_SHADOW","color":{"r":0.18431372940540314,"g":0.2235294133424759,"b":0.2549019753932953,"a":0.3499999940395355},"offset":{"x":-20,"y":20},"radius":0,"spread":0,"visible":true,"blendMode":"NORMAL"}]
+        break
+      }
+      case STYLE_ID_MENU: {
+        node.effectStyleId = ""
+        node.effects = [{"type":"DROP_SHADOW","color":{"r":0.01568627543747425,"g":0.2666666805744171,"b":0.3019607961177826,"a":0.15000000596046448},"offset":{"x":-10,"y":10},"radius":0,"spread":0,"visible":true,"blendMode":"NORMAL"}]
+        break
+      }
+      case STYLE_ID_TOOLTIP: {
+        node.effectStyleId = ""
+        node.effects = [{"type":"DROP_SHADOW","color":{"r":0.01568627543747425,"g":0.2666666805744171,"b":0.3019607961177826,"a":0.15000000596046448},"offset":{"x":-4,"y":4},"radius":0,"spread":0,"visible":true,"blendMode":"NORMAL"}]
+        break
+      }
+    }
   }
 }
 
